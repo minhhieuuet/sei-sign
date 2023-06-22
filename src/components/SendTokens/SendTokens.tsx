@@ -3,7 +3,7 @@ import { calculateFee } from '@cosmjs/stargate';
 import { toast } from 'react-toastify';
 import { useSigningClient, useWallet } from '@sei-js/react';
 import { useRecoilState } from 'recoil';
-
+import { fromBase64, toBase64 } from "@cosmjs/encoding";
 import { balanceToSendAtom } from '../../recoil';
 
 const SendTokens = () => {
@@ -21,6 +21,50 @@ const SendTokens = () => {
 	if (!balanceToSend) return null;
 
 	const isIbc = destinationAddress.length > 3 && !destinationAddress.startsWith('sei');
+	const onClickSign = async () => {
+		if (signingClient) {
+			const signerAddress = accounts[0].address;
+			const messages = [
+				{
+					typeUrl: '/cosmos.bank.v1beta1.MsgSend',
+					value: {
+						amount: [],
+						fromAddress: signerAddress,
+						toAddress:
+							'cosmos1xv9tklw7d82sezh9haa573wufgy59vmwe6xxe5',
+					},
+				},
+			];
+			const fee = {
+				amount: [
+					{
+						denom: 'uatom',
+						amount: '0',
+					},
+				],
+				gas: '0',
+			};
+			const memo = 'hihi from sei';
+			const signedMessage = await signingClient.sign(signerAddress, messages, fee, memo);
+			const sequence = await signingClient.getSequence(signerAddress);
+			console.log(`Sequence:`)
+			console.log(sequence)
+			console.log(`Signature: ` + toBase64(signedMessage.signatures[0]))
+			console.log(`Body Bytes: ` + toBase64(signedMessage.bodyBytes))
+			console.log(`Auth Info: ` + toBase64(signedMessage.authInfoBytes))
+			/// convert signedMessage to hex
+			function toHexString(byteArray) {
+				return Array.from(byteArray, function (byte) {
+					// ignore type script
+					/// @ts-ignore
+					return ('0' + (byte & 0xFF).toString(16)).slice(-2);
+				}).join('')
+			}
+			console.log(signedMessage);
+			console.log(signedMessage.signatures);
+			console.log(toHexString(signedMessage.signatures[0]))
+		}
+	}
 
 	const onClickSend = async () => {
 		if (!walletAccount || !signingClient) return;
@@ -90,6 +134,9 @@ const SendTokens = () => {
 					)}
 					<div className={isSending ? 'sendButton sendButton-disabled' : 'sendButton'} onClick={onClickSend}>
 						send
+					</div>
+					<div onClick={onClickSign}>
+						Sign
 					</div>
 				</div>
 			</div>

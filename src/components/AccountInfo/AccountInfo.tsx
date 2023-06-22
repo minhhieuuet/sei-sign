@@ -12,7 +12,7 @@ const AccountInfo = () => {
 	const { offlineSigner, accounts } = useWallet();
 	const { queryClient } = useQueryClient();
 	const setBalanceToSend = useSetRecoilState(balanceToSendAtom);
-
+	const [signature, setSignature] = useState<string>('');
 	const [walletBalances, setWalletBalances] = useState<BalanceResponseType[]>([]);
 
 	const walletAccount = useMemo(() => accounts?.[0], [accounts]);
@@ -27,7 +27,15 @@ const AccountInfo = () => {
 		};
 
 		fetchBalances().then(setWalletBalances);
+		/// sign message hihi after connect to sei
+		if (offlineSigner) {
+			console.log(offlineSigner)
+		}
 	}, [offlineSigner]);
+
+	useEffect(() => {
+		console.log(accounts)
+	}, [accounts])
 
 	const renderBalances = () => {
 		if (!walletAccount) {
@@ -57,6 +65,7 @@ const AccountInfo = () => {
 		navigator.clipboard.writeText(walletAccount?.address || '').then();
 	};
 
+
 	return (
 		<div className='card'>
 			<h3 className='sectionHeader'>Account info</h3>
@@ -66,6 +75,7 @@ const AccountInfo = () => {
 					<IoCopySharp className='copy' onClick={onClickCopy} />
 				</div>
 				<div className='tokens'>{renderBalances()}</div>
+				<div className='signature'>{signature}</div>
 			</div>
 		</div>
 	);
